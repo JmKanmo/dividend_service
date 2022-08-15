@@ -4,6 +4,7 @@ import com.dayone.web.yahoo.service.MemberService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.cfg.NotYetImplementedException;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,11 +26,12 @@ public class TokenProvider {
 
     private final MemberService memberService;
 
-    @Value("{spring.jwt.secret}")
+    @Value("${spring.jwt.secret}")
     private String secretKey;
 
     /**
      * 토큰 생성(발급)
+     *
      * @param username
      * @param roles
      * @return
@@ -41,9 +43,17 @@ public class TokenProvider {
         //      - 생성 시간
         //      - 만료 시간
         //      - signature
+        Claims claims = Jwts.claims().setSubject(username);
+        claims.put(KEY_ROLES, roles);
 
+        var now = new Date();
+        var expireDate = new Date(now.getTime() + TOKEN_EXPIRE_TIME);
         // jwt 발급
-        throw new NotYetImplementedException();
+        return Jwts.builder()
+                .setClaims(claims)
+                .setIssuedAt(now)
+                .setExpiration(expireDate)
+                .signWith(SignatureAlgorithm.HS512, this.secretKey).compact();
     }
 
     public Authentication getAuthentication(String jwt) {

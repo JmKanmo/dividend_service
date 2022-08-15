@@ -18,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -76,10 +77,12 @@ public class CompanyService {
         this.trie.remove(keyword);
     }
 
+    @Transactional
     public String deleteCompany(String ticker) {
         // 1. 배당금 정보 삭제
         if (companyRepository.existsByTicker(ticker)) {
-            CompanyEntity companyEntity = companyRepository.deleteCompanyEntityByTicker(ticker);
+            CompanyEntity companyEntity = companyRepository.findByTicker(ticker).get();
+            companyRepository.deleteByTicker(ticker);
             dividendRepository.deleteAllByCompanyId(companyEntity.getId());
             return companyEntity.getName();
         } else {

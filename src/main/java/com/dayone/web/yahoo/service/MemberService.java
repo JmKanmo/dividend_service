@@ -1,6 +1,7 @@
 package com.dayone.web.yahoo.service;
 
 import com.dayone.exception.model.AlreadyExistUserException;
+import com.dayone.exception.model.PasswordUnvalidException;
 import com.dayone.model.Auth;
 import com.dayone.persist.MemberRepository;
 import com.dayone.persist.entity.MemberEntity;
@@ -29,22 +30,29 @@ public class MemberService implements UserDetailsService {
 
     public MemberEntity register(Auth.SignUp member) {
         // 아이디가 존재하는 경우 exception 발생
-        boolean exists = false; // not implemented yet
+        boolean exists = this.memberRepository.existsByUsername(member.getUsername());
+
         if (exists) {
             throw new AlreadyExistUserException();
         }
 
         // ID 생성 가능한 경우, 멤버 테이블에 저장
         // 비밀번호는 암호화 되어서 저장되어야함
-        throw new NotYetImplementedException();
+        member.setPassword(this.passwordEncoder.encode(member.getPassword()));
+        return memberRepository.save(member.toEntity());
     }
 
     public MemberEntity authenticate(Auth.SignIn member) {
         // id 로 멤버 조회
+        var user = this.memberRepository.findByUsername(member.getUsername())
+                .orElseThrow(() -> new UsernameNotFoundException("로그인 id 정보가 존재하지 않습니다."));
 
         // 패스워드 일치 여부 확인
         //      - 일치하지 않는 경우 400 status 코드와 적합한 에러 메시지 반환
         //      - 일치하는 경우, 해당 멤버 엔티티 반환
-        throw new NotYetImplementedException();
+        if (!this.passwordEncoder.matches(member.getPassword(), user.getPassword())) {
+            throw new PasswordUnvalidException();
+        }
+        return user;
     }
 }

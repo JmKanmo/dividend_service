@@ -20,5 +20,5 @@ public interface CompanyRepository extends JpaRepository<CompanyEntity, Long> {
 
     Page<CompanyEntity> findCompanyEntityBy(Pageable pageable);
 
-    CompanyEntity deleteCompanyEntityByTicker(String ticker);
+    void deleteByTicker(String ticker);
 }
